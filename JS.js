@@ -20,11 +20,21 @@ const roomBackgroundURLs = {
 // Define custom room names for each room coordinate
 const customRoomNames = {
   "0,0": "Spawn Point",
-  "1,0": "Forest",
-  "2,0": "Castle",
-  "0,1": "Village",
-  "1,1": "Market",
-  "2,1": "River"
+  "1,0": "Enemies of discrimination",
+  "2,0": "Help from woman in AI",
+  "0,1": "Passionate room",
+  "1,1": "Enemies of critics",
+  "2,1": "Time to succeed!"
+};
+
+// Define room descriptions (hints) for each room.
+const roomDescriptions = {
+  "0,0": "This is where you begin, use arrows to move",
+  "1,0": "Stay away from the discrimination",
+  "2,0": "Biography, wisdom and power that will help you",
+  "0,1": "Receive the fire of passion",
+  "1,1": "Don't mind the critics",
+  "2,1": "Break the stereotype with passion and succeed"
 };
 
 // Create a grid of rooms (2 rows x 3 columns)
@@ -57,7 +67,7 @@ if (rooms["1,0"]) {
       y: Math.random() * (roomHeight - 32),
       width: 32,
       height: 32,
-      speed: 1,
+      speed: 1.5,  // increased speed
       dx: 0,
       dy: 0
     };
@@ -74,7 +84,7 @@ if (rooms["1,1"]) {
       y: Math.random() * (roomHeight - 32),
       width: 32,
       height: 32,
-      speed: 1,
+      speed: 1.5,  // increased speed
       dx: 0,
       dy: 0
     };
@@ -83,7 +93,6 @@ if (rooms["1,1"]) {
 }
 
 // In room (2,0), add three health pickups.
-// The first and second remain as before; the third is now bigger (64x64).
 if (rooms["2,0"]) {
   rooms["2,0"].healthPickups = [];
   const positions = [
@@ -125,14 +134,13 @@ if (rooms["2,0"]) {
 }
 
 // In room (0,1), add an appearance pickup.
-// When the girl touches this pickup, her appearance changes.
 if (rooms["0,1"]) {
   rooms["0,1"].appearancePickup = {
     x: roomWidth / 2 - 32,
     y: roomHeight / 2 - 32,
     width: 64,
     height: 64,
-    image: (function() {
+    image: (() => {
       const img = new Image();
       img.src = "https://raw.githubusercontent.com/JimmyWooHoo/GenAI/main/appearance_pickup.png";
       return img;
@@ -142,9 +150,6 @@ if (rooms["0,1"]) {
 }
 
 // In room (2,1), add three bounce pads.
-// BouncePad1: Outer pad with radius 90.
-// BouncePad2: Inner pad with radius 70.
-// BouncePad3: Small pad with radius 50.
 if (rooms["2,1"]) {
   rooms["2,1"].bouncePad = {
     radius: 90,
@@ -160,13 +165,12 @@ if (rooms["2,1"]) {
   };
   
   // Also add a win item at the center of room (2,1).
-  // This image will not disappear and winning the game is triggered when touched.
   rooms["2,1"].winItem = {
     x: roomWidth / 2 - 25, // assuming win item is 50x50
     y: roomHeight / 2 - 25,
     width: 50,
     height: 50,
-    image: (function() {
+    image: (() => {
       const img = new Image();
       img.src = "https://raw.githubusercontent.com/JimmyWooHoo/GenAI/main/win_item.png"; // Replace with your desired PNG URL
       return img;
@@ -174,41 +178,41 @@ if (rooms["2,1"]) {
   };
 }
 
-// Load enemy images for each room
+// Load enemy images.
 const enemyImage1 = new Image();
 enemyImage1.src = "https://raw.githubusercontent.com/JimmyWooHoo/GenAI/main/small_enemy1.png";
 const enemyImage2 = new Image();
 enemyImage2.src = "https://raw.githubusercontent.com/JimmyWooHoo/GenAI/main/small_enemy.png";
 
-// Start in room (0,0)
+// Start in room (0,0).
 let currentRoom = rooms["0,0"];
 
-// Global variable to store previous room key
+// Global variable for previous room key.
 let prevRoomKey = `${currentRoom.gridX},${currentRoom.gridY}`;
 
-// Bounce configuration
-const bounceDuration = 60; // frames for bounce animation
-const bounceDistance = 96; // total bounce distance
+// Bounce configuration.
+const bounceDuration = 60; // frames for bounce animation.
+const bounceDistance = 96; // total bounce distance.
 
-// Player object with additional properties for bounce animation and appearance change.
+// Player object with additional properties.
 const player = {
   x: roomWidth / 2 - 32,
   y: roomHeight / 2 - 32,
   speed: 2,
   width: 64,
   height: 64,
-  lifebar: 10,
+  lifebar: 7, // initial health set to 7
   collisionCooldown: 0,
   bounceCooldown: 0, // frames remaining during bounce animation
   bounceVector: { dx: 0, dy: 0 }, // per-frame bounce displacement
   appearanceChanged: false // false until the appearance pickup is collected
 };
 
-// Load the player's character image
+// Load the player's character image.
 const playerImage = new Image();
 playerImage.src = 'https://raw.githubusercontent.com/JimmyWooHoo/GenAI/main/little_girl.png';
 
-// Simple AABB collision detection
+// Simple AABB collision detection.
 function isColliding(rect1, rect2) {
   return !(
     rect1.x > rect2.x + rect2.width ||
@@ -218,9 +222,15 @@ function isColliding(rect1, rect2) {
   );
 }
 
-// Keep track of pressed keys for movement
+// Keep track of pressed keys.
 const keys = { up: false, down: false, left: false, right: false };
 document.addEventListener('keydown', (e) => {
+  // Restart game if spacebar is pressed when game over or won.
+  if (e.code === "Space" || e.keyCode === 32 || e.key === " ") {
+    if (gameOver || gameWon) {
+      location.reload();
+    }
+  }
   switch (e.key) {
     case 'ArrowUp':    keys.up = true; break;
     case 'ArrowDown':  keys.down = true; break;
@@ -237,7 +247,7 @@ document.addEventListener('keyup', (e) => {
   }
 });
 
-// Define door gap size and wall thickness
+// Define door gap size and wall thickness.
 const doorGap = 80;
 const wallThickness = 8;
 
@@ -245,7 +255,6 @@ const wallThickness = 8;
 function update() {
   if (gameOver || gameWon) return;
   
-  // If player is bouncing, ignore key input and apply bounce vector.
   if (player.bounceCooldown > 0) {
     player.x += player.bounceVector.dx;
     player.y += player.bounceVector.dy;
@@ -264,7 +273,7 @@ function update() {
     player.collisionCooldown--;
   }
   
-  // Process room transitions
+  // Room transitions.
   if (player.x < 0) {
     const newKey = `${currentRoom.gridX - 1},${currentRoom.gridY}`;
     if (rooms.hasOwnProperty(newKey)) {
@@ -365,7 +374,7 @@ function update() {
   if (newRoomKey === "2,0" && currentRoom.healthPickups) {
     currentRoom.healthPickups.forEach(pickup => {
       if (!pickup.collected && isColliding(player, pickup)) {
-        player.lifebar += 5;
+        player.lifebar += 2;  // Increase health by 2
         pickup.collected = true;
       }
     });
@@ -382,7 +391,7 @@ function update() {
   }
   
   // Process bounce pads in room (2,1).
-  // Bounce Pad 1 (big outer circle)
+  // Bounce Pad 1 (outer circle)
   if (newRoomKey === "2,1" && currentRoom.bouncePad && !currentRoom.bouncePad.collected) {
     const pad = currentRoom.bouncePad;
     const padCenterX = roomWidth / 2;
@@ -448,7 +457,7 @@ function update() {
     }
   }
   
-  // In room (2,1), process win item.
+  // Process win item in room (2,1).
   if (newRoomKey === "2,1" && currentRoom.winItem && !gameWon) {
     if (isColliding(player, currentRoom.winItem)) {
       gameWon = true;
@@ -456,7 +465,7 @@ function update() {
   }
 }
 
-// Draw room background, walls, door gaps, room name, pickups, bounce pads, win item, and enemies.
+// Draw room: background, walls, door gaps, room name, pickups, bounce pads, win item, and enemies.
 function drawRoom() {
   const bgImage = currentRoom.background;
   if (bgImage && bgImage.complete && bgImage.naturalWidth) {
@@ -466,7 +475,7 @@ function drawRoom() {
     ctx.fillRect(0, 0, roomWidth, roomHeight);
   }
   
-  // Draw walls in gray.
+  // Draw walls.
   ctx.strokeStyle = '#888';
   ctx.lineWidth = wallThickness;
   
@@ -530,39 +539,43 @@ function drawRoom() {
   }
   ctx.stroke();
   
-  // Draw door gaps with custom colors.
+  // Draw door gaps.
   const currentKey = `${currentRoom.gridX},${currentRoom.gridY}`;
-  
-  // Top door gap.
   if (rooms.hasOwnProperty(`${currentRoom.gridX},${currentRoom.gridY - 1}`)) {
     ctx.fillStyle = (currentKey === "2,1" || currentKey === "0,1") ? 'darkgreen' : 'red';
     ctx.fillRect(doorStartX, 0, doorGap, wallThickness);
   }
-  
-  // Bottom door gap.
   if (rooms.hasOwnProperty(`${currentRoom.gridX},${currentRoom.gridY + 1}`)) {
     ctx.fillStyle = (currentKey === "0,0") ? 'darkgreen' : 'red';
     ctx.fillRect(doorStartX, roomHeight - wallThickness, doorGap, wallThickness);
   }
-  
-  // Left door gap.
   if (rooms.hasOwnProperty(`${currentRoom.gridX - 1},${currentRoom.gridY}`)) {
     ctx.fillStyle = (currentKey === "1,0" || currentKey === "1,1") ? 'darkgreen' : 'red';
     ctx.fillRect(0, doorStartY, wallThickness, doorGap);
   }
-  
-  // Right door gap.
   if (rooms.hasOwnProperty(`${currentRoom.gridX + 1},${currentRoom.gridY}`)) {
     ctx.fillStyle = (currentKey === "1,0") ? 'darkgreen' : 'red';
     ctx.fillRect(roomWidth - wallThickness, doorStartY, wallThickness, doorGap);
   }
   
-  // Display current room's custom name in bold, large, black text.
+  // Display room name.
   ctx.fillStyle = 'black';
   ctx.font = 'bold 30px Arial';
+  ctx.textAlign = 'left';
   ctx.fillText(currentRoom.name, 10, 40);
   
-  // Draw health pickups in room (2,0) if not collected.
+  // Draw room description at the bottom with a background.
+  if (roomDescriptions[currentKey]) {
+    // Draw a semi-transparent rectangle higher up from the bottom.
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, roomHeight - 100, roomWidth, 40);
+    // Draw the description text.
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(roomDescriptions[currentKey], 10, roomHeight - 70);
+  }
+  
+  // Draw health pickups.
   if (currentKey === "2,0" && currentRoom.healthPickups) {
     currentRoom.healthPickups.forEach(pickup => {
       if (!pickup.collected) {
@@ -576,7 +589,7 @@ function drawRoom() {
     });
   }
   
-  // Draw appearance pickup in room (0,1) if not collected.
+  // Draw appearance pickup.
   if (currentKey === "0,1" && currentRoom.appearancePickup && !currentRoom.appearancePickup.collected) {
     const ap = currentRoom.appearancePickup;
     if (ap.image.complete) {
@@ -587,7 +600,7 @@ function drawRoom() {
     }
   }
   
-  // Draw bounce pad 1 (big outer circle) in room (2,1) if not collected.
+  // Draw bounce pad 1.
   if (currentKey === "2,1" && currentRoom.bouncePad && !currentRoom.bouncePad.collected) {
     const pad = currentRoom.bouncePad;
     const padCenterX = roomWidth / 2;
@@ -598,8 +611,7 @@ function drawRoom() {
     ctx.arc(padCenterX, padCenterY, pad.radius, 0, Math.PI * 2);
     ctx.stroke();
   }
-  
-  // Draw bounce pad 2 (inner circle) in room (2,1) if not collected.
+  // Draw bounce pad 2.
   if (currentKey === "2,1" && currentRoom.bouncePad2 && !currentRoom.bouncePad2.collected) {
     const pad = currentRoom.bouncePad2;
     const padCenterX = roomWidth / 2;
@@ -610,8 +622,7 @@ function drawRoom() {
     ctx.arc(padCenterX, padCenterY, pad.radius, 0, Math.PI * 2);
     ctx.stroke();
   }
-  
-  // Draw bounce pad 3 (small inner circle) in room (2,1) if not collected.
+  // Draw bounce pad 3.
   if (currentKey === "2,1" && currentRoom.bouncePad3 && !currentRoom.bouncePad3.collected) {
     const pad = currentRoom.bouncePad3;
     const padCenterX = roomWidth / 2;
@@ -623,7 +634,7 @@ function drawRoom() {
     ctx.stroke();
   }
   
-  // Draw win item in room (2,1) (this one never disappears).
+  // Draw win item.
   if (currentKey === "2,1" && currentRoom.winItem) {
     const win = currentRoom.winItem;
     if (win.image.complete) {
@@ -634,7 +645,7 @@ function drawRoom() {
     }
   }
   
-  // Draw enemies in room (1,0) or (1,1).
+  // Draw enemies.
   if ((currentKey === "1,0" || currentKey === "1,1") && currentRoom.enemies) {
     currentRoom.enemies.forEach(enemy => {
       if (currentKey === "1,0") {
@@ -656,7 +667,7 @@ function drawRoom() {
   }
 }
 
-// Draw player and lifebar with bold, large, black text.
+// Draw player and lifebar.
 function drawPlayer() {
   if (playerImage.complete) {
     ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
