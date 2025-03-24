@@ -1,5 +1,7 @@
 # EmpowHer: Adventure Game
 
+# https://codepen.io/Songxuan-Wu/pen/OPJEJXQ
+
 ## Project Overview
 
 EmpowHer is an interactive adventure game designed to highlight and challenge stereotypes faced by women in Artificial Intelligence (AI). Players navigate through various rooms, overcome symbolic obstacles, and collect empowering resources, ultimately breaking stereotypes and achieving success in the field.
