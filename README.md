@@ -1,6 +1,6 @@
 # EmpowHer: Adventure Game
 
-# https://codepen.io/Songxuan-Wu/pen/OPJEJXQ
+https://codepen.io/Songxuan-Wu/pen/OPJEJXQ
 
 ## Project Overview
 
